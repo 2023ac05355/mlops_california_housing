@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline for Databricks MLflow
 
 on:
   push:
@@ -7,12 +7,25 @@ on:
       - develop
   pull_request: {}
 
+env:
+  MLFLOW_TRACKING_URI: databricks
+  DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+  DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -21,19 +34,20 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Run flake8
+      - name: Run flake8 linting
         run: flake8 .
 
-      - name: Run pytest
+      - name: Run tests
         run: pytest tests/test_basic.py --maxfail=1 --disable-warnings -q
 
   docker-build-and-push:
     needs: lint-and-test
-    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -52,13 +66,14 @@ jobs:
 
   deploy:
     needs: docker-build-and-push
-    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy locally (example)
+      # Example deploy script: customize based on your deployment environment
+      - name: Deploy application
         run: |
           chmod +x deploy.sh
           ./deploy.sh
