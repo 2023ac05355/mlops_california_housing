@@ -73,7 +73,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Make deploy.sh executable (Linux/macOS only)
+        if: runner.os != 'Windows'
+        run: chmod +x deploy.sh
+
       - name: Deploy application
-        run: |
-          chmod +x deploy.sh
-          ./deploy.sh
+        run: ./deploy.sh
