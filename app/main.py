@@ -1,7 +1,7 @@
 import pandas as pd
 import mlflow.sklearn
 import pickle
-from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi import FastAPI, Request, BackgroundTasks, Response
 from mlflow.tracking import MlflowClient
 from mlflow import artifacts
 import mlflow
@@ -10,7 +10,7 @@ import sqlite3
 from datetime import datetime
 import time
 from pydantic import BaseModel, Field
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from typing import Literal
 
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s %(message)s')
@@ -20,6 +20,7 @@ REQUEST_COUNT = Counter("request_count", "Total number of requests")
 REQUEST_LATENCY = Histogram("request_latency_seconds", "Latency of requests in seconds")
 
 app = FastAPI()
+# start_http_server(8001)
 
 
 class HousingInput(BaseModel):
@@ -119,12 +120,9 @@ async def metrics_middleware(request: Request, call_next):
 
 
 @app.get("/metrics")
-def get_metrics():
-    avg_latency = total_latency / request_count if request_count > 0 else 0
-    return {
-        "total_requests": request_count,
-        "average_latency_seconds": round(avg_latency, 4)
-    }
+def metrics():
+    # Return all metrics in Prometheus exposition format
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 def retrain_model():
