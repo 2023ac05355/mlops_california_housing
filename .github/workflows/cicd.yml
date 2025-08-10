@@ -68,12 +68,11 @@ jobs:
   deploy:
     needs: docker-build-and-push
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Example deploy script: customize based on your deployment environment
       - name: Deploy application
         run: |
           chmod +x deploy.sh

@@ -2,13 +2,14 @@ import os
 import pandas as pd
 import mlflow.sklearn
 import pickle
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from mlflow.tracking import MlflowClient
 from mlflow import artifacts
 import mlflow
 import logging
 import sqlite3
 from datetime import datetime
+import time
 
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s %(message)s')
 
@@ -69,3 +70,29 @@ async def predict(input_data: dict):
     conn.commit()
     logging.info(f"Model output: {prediction}")
     return {"prediction": prediction.tolist()}
+
+
+request_count = 0
+total_latency = 0.0
+
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    global request_count, total_latency
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+
+    request_count += 1
+    total_latency += process_time
+
+    return response
+
+
+@app.get("/metrics")
+def get_metrics():
+    avg_latency = total_latency / request_count if request_count > 0 else 0
+    return {
+        "total_requests": request_count,
+        "average_latency_seconds": round(avg_latency, 4)
+    }
