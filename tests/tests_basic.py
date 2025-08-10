@@ -1,9 +1,14 @@
 from fastapi.testclient import TestClient
+import sys
+
+sys.path.append("..")
 
 
-from main import app  
+from app.main import app
+
 
 client = TestClient(app)
+
 
 def test_predict_endpoint():
     payload = {
@@ -15,7 +20,7 @@ def test_predict_endpoint():
         "population": 322.0,
         "households": 126.0,
         "median_income": 8.3252,
-        "ocean_proximity": "NEAR BAY"
+        "ocean_proximity": "NEAR BAY",
     }
     response = client.post("/predict", json=payload)
     assert response.status_code == 200
