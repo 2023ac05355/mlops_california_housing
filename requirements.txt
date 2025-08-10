@@ -4,3 +4,5 @@ mlflow
 scikit-learn
 pandas
 httpx
+databricks-sdk
+prometheus-client

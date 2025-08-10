@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import mlflow.sklearn
 import pickle
@@ -10,12 +9,38 @@ import logging
 import sqlite3
 from datetime import datetime
 import time
+from pydantic import BaseModel, Field
+from prometheus_client import Counter, Histogram
+from typing import Literal
 
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s %(message)s')
 
+# Prometheus metrics
+REQUEST_COUNT = Counter("request_count", "Total number of requests")
+REQUEST_LATENCY = Histogram("request_latency_seconds", "Latency of requests in seconds")
+
 app = FastAPI()
 
-mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "databricks")
+
+class HousingInput(BaseModel):
+    longitude: float = Field(..., ge=-125, le=-114)
+    latitude: float = Field(..., ge=32, le=42)
+    housing_median_age: float = Field(..., gt=0)
+    total_rooms: float = Field(..., gt=0)
+    total_bedrooms: float = Field(..., gt=0)
+    population: float = Field(..., gt=0)
+    households: float = Field(..., gt=0)
+    median_income: float = Field(..., gt=0)
+    ocean_proximity: Literal[
+        "NEAR BAY",
+        "INLAND",
+        "<1H OCEAN",
+        "NEAR OCEAN",
+        "ISLAND"
+    ]
+
+
+mlflow_tracking_uri = "databricks"
 mlflow.set_tracking_uri(mlflow_tracking_uri)
 client = MlflowClient()
 model_name = "mlops.default.california_housing_best_model"
@@ -51,24 +76,28 @@ CREATE TABLE IF NOT EXISTS logs (
 conn.commit()
 
 
+@REQUEST_LATENCY.time()
 @app.post("/predict")
-async def predict(input_data: dict):
+async def predict(input_data: HousingInput):
     logging.info(f"Received request data: {input_data}")
-    # Prepare input data
-    df = pd.DataFrame([input_data])
+    REQUEST_COUNT.inc()
+    # Convert pydantic model to dict
+    data_dict = input_data.dict()
+    df = pd.DataFrame([data_dict])
     df = pd.get_dummies(df)
     df = df.reindex(columns=feature_columns, fill_value=0)
-
     X_scaled = scaler.transform(df)
+    # Predict
     prediction = model.predict(X_scaled)
 
     # Log to SQLite
     cursor.execute(
         "INSERT INTO logs (timestamp, request_data, prediction_output) VALUES (?, ?, ?)",
-        (datetime.utcnow().isoformat(), str(input_data), str(prediction.tolist()))
+        (datetime.utcnow().isoformat(), str(data_dict), str(prediction.tolist()))
     )
     conn.commit()
-    logging.info(f"Model output: {prediction}")
+
+    logging.info(f"Model output: {prediction.tolist()}")
     return {"prediction": prediction.tolist()}
 
 
