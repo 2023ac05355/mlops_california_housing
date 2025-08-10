@@ -41,6 +41,7 @@ feature_columns_path = artifacts.download_artifacts(f"runs:/{run_id}/feature_col
 scaler = pickle.load(open(scaler_path, "rb"))
 feature_columns = pickle.load(open(feature_columns_path, "rb"))
 
+
 @app.post("/predict")
 def predict(input_data: dict):
     df = pd.DataFrame([input_data])
@@ -49,4 +50,3 @@ def predict(input_data: dict):
     X_scaled = scaler.transform(df)
     prediction = model.predict(X_scaled)
     return {"prediction": prediction.tolist()}
-
