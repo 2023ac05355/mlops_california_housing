@@ -129,7 +129,7 @@ def get_metrics():
 
 def retrain_model():
     print("Starting model retraining...")
-    time.sleep(5) 
+    time.sleep(5)
     print("Model retraining completed!")
 
 
