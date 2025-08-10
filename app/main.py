@@ -7,6 +7,9 @@ from mlflow.tracking import MlflowClient
 from mlflow import artifacts
 import mlflow
 
+import sqlite3
+from datetime import datetime
+
 app = FastAPI()
 
 mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "databricks")
@@ -16,15 +19,15 @@ client = MlflowClient()
 
 model_name = "mlops.default.california_housing_best_model"
 
-# Load model by alias "production" using '@' syntax (this is supported)
+# Load model by alias "production" using '@' syntax 
 model = mlflow.sklearn.load_model(f"models:/{model_name}@production")
 
-# To get model version info, list all versions and filter manually (avoid get_latest_versions)
+# To get model version info, list all versions and filter manually
 all_versions = client.search_model_versions(f"name='{model_name}'")
 
 prod_version_info = None
 for v in all_versions:
-    # Fetch full model version info (includes aliases)
+    # Fetch full model version info
     full_version = client.get_model_version(name=model_name, version=v.version)
     if 'production' in full_version.aliases:
         prod_version_info = full_version
@@ -42,11 +45,36 @@ scaler = pickle.load(open(scaler_path, "rb"))
 feature_columns = pickle.load(open(feature_columns_path, "rb"))
 
 
+# Logging
+
+# Initialize SQLite connection and create table
+conn = sqlite3.connect('logs.db', check_same_thread=False)
+cursor = conn.cursor()
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT,
+    request_data TEXT,
+    prediction_output TEXT
+)
+''')
+conn.commit()
+
 @app.post("/predict")
-def predict(input_data: dict):
+async def predict(input_data: dict):
+    # Prepare input data
     df = pd.DataFrame([input_data])
     df = pd.get_dummies(df)
     df = df.reindex(columns=feature_columns, fill_value=0)
+
     X_scaled = scaler.transform(df)
     prediction = model.predict(X_scaled)
+
+    # Log to SQLite
+    cursor.execute(
+        "INSERT INTO logs (timestamp, request_data, prediction_output) VALUES (?, ?, ?)",
+        (datetime.utcnow().isoformat(), str(input_data), str(prediction.tolist()))
+    )
+    conn.commit()
+
     return {"prediction": prediction.tolist()}

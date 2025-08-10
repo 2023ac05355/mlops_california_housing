@@ -3,6 +3,8 @@ set -e
 
 IMAGE="${DOCKERHUB_USERNAME}/housing-api:latest"
 
+echo "Using image: $IMAGE"
+
 echo "Pulling latest image..."
 docker pull "$IMAGE"
 
