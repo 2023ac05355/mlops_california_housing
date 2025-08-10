@@ -6,9 +6,11 @@ from fastapi import FastAPI
 from mlflow.tracking import MlflowClient
 from mlflow import artifacts
 import mlflow
-
+import logging
 import sqlite3
 from datetime import datetime
+
+logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s %(message)s')
 
 app = FastAPI()
 
@@ -50,6 +52,7 @@ conn.commit()
 
 @app.post("/predict")
 async def predict(input_data: dict):
+    logging.info(f"Received request data: {input_data}")
     # Prepare input data
     df = pd.DataFrame([input_data])
     df = pd.get_dummies(df)
@@ -64,5 +67,5 @@ async def predict(input_data: dict):
         (datetime.utcnow().isoformat(), str(input_data), str(prediction.tolist()))
     )
     conn.commit()
-
+    logging.info(f"Model output: {prediction}")
     return {"prediction": prediction.tolist()}
