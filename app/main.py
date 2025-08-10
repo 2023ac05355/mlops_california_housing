@@ -1,7 +1,7 @@
 import pandas as pd
 import mlflow.sklearn
 import pickle
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
 from mlflow.tracking import MlflowClient
 from mlflow import artifacts
 import mlflow
@@ -125,3 +125,15 @@ def get_metrics():
         "total_requests": request_count,
         "average_latency_seconds": round(avg_latency, 4)
     }
+
+
+def retrain_model():
+    print("Starting model retraining...")
+    time.sleep(5) 
+    print("Model retraining completed!")
+
+
+@app.post("/new-data")
+def new_data_endpoint(data: HousingInput, background_tasks: BackgroundTasks):
+    background_tasks.add_task(retrain_model)
+    return {"message": "New data received. Model retraining triggered in background."}
