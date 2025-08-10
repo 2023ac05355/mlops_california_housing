@@ -1,10 +1,8 @@
-from fastapi.testclient import TestClient
 import sys
+sys.path.append("..")  # noqa: E402
 
-sys.path.append("..")
-
-
-from app.main import app
+from fastapi.testclient import TestClient  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 client = TestClient(app)
@@ -25,3 +23,5 @@ def test_predict_endpoint():
     response = client.post("/predict", json=payload)
     assert response.status_code == 200
     assert "prediction" in response.json()
+
+# (blank line at EOF)
