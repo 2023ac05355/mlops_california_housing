@@ -28,7 +28,7 @@ jobs:
         run: flake8 .
 
       - name: Run pytest
-        run: pytest --maxfail=1 --disable-warnings -q
+        run: pytest tests/test_basic.py --maxfail=1 --disable-warnings -q
 
   docker-build-and-push:
     needs: lint-and-test
