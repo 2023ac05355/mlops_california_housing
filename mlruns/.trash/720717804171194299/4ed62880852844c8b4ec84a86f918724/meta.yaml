@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/720717804171194299/4ed62880852844c8b4ec84a86f918724/artifacts
+deleted_time: 1754805304168
+end_time: null
+entry_point_name: ''
+experiment_id: '720717804171194299'
+lifecycle_stage: deleted
+run_id: 4ed62880852844c8b4ec84a86f918724
+run_name: welcoming-skink-785
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754804717367
+status: 1
+tags: []
+user_id: arun

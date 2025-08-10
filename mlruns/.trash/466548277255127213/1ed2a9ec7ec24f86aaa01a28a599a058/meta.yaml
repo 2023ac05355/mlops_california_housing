@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/466548277255127213/1ed2a9ec7ec24f86aaa01a28a599a058/artifacts
+deleted_time: 1754804365497
+end_time: 1754800899973
+entry_point_name: ''
+experiment_id: '466548277255127213'
+lifecycle_stage: deleted
+run_id: 1ed2a9ec7ec24f86aaa01a28a599a058
+run_name: LinearRegression
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1754800891027
+status: 3
+tags: []
+user_id: arun
